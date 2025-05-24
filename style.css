@@ -1,0 +1,152 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #72EDF2 10%, #5151E5 100%);
+  margin: 0;
+  padding: 40px 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.todo-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px 35px;
+  box-shadow: 0 12px 28px rgba(80, 93, 230, 0.24);
+  width: 100%;
+  max-width: 500px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2rem;
+  color: #343a40;
+  margin-bottom: 20px;
+}
+
+.input-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.input-group input,
+.input-group select {
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #ccc;
+}
+
+.input-group button {
+  background: #5151e5;
+  color: white;
+  font-size: 1rem;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.input-group button:hover {
+  background: #3f3fc0;
+}
+
+#categoryFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+#categoryFilter button {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #e0e0ff;
+  color: #5151e5;
+  font-weight: bold;
+}
+
+#categoryFilter button.active {
+  background: #343a40;
+  color: white;
+}
+
+#taskList {
+  list-style: none;
+  padding: 0;
+}
+
+.task {
+  background: #f9f9f9;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task.done {
+  background: #d1e7dd;
+  text-decoration: line-through;
+  color: #3a6b35;
+}
+
+.task-left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.circle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #5151e5;
+  border-radius: 50%;
+}
+
+.circle.checked {
+  background-color: #5151e5;
+}
+
+.badge {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+}
+
+.badge.red { background: #ef4444; }
+.badge.green { background: #22c55e; }
+.badge.blue { background: #3b82f6; }
+.badge.yellow { background: #eab308; }
+.badge.purple { background: #8b5cf6; }
+.badge.pink { background: #ec4899; }
+
+.task small {
+  display: block;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.task button {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #d6336c;
+  cursor: pointer;
+}
