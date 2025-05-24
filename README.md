@@ -3,7 +3,7 @@
 Author: Rhea K N
 Submission Title: Rhea_KN_Todolist  
 Submission Type: Phase 1 – Frontend UI  
-Repository: [Insert your GitHub repository link here]
+Repository: https://github.com/RheaNaveen/Rhea_KN_Todolist.git
 
 ---
 
