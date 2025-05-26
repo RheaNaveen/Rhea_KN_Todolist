@@ -42,18 +42,25 @@ function authMiddleware(req, res, next) {
   });
 }
 
-// Dummy LOGIN route with JWT token
+// Dummy LOGIN route
+const bcrypt = require('bcryptjs');
+
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
+  db.query('SELECT * FROM Users WHERE email = ?', [email], async (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
 
-  // Replace this with a real user check in future
-  if (email === 'test@example.com' && password === '123456') {
-    const token = jwt.sign({ email }, secretKey, { expiresIn: '1h' });
+    const user = results[0];
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+
+    const token = jwt.sign({ email: user.email, user_id: user.user_id }, secretKey, { expiresIn: '1h' });
     res.json({ success: true, token });
-  } else {
-    res.status(401).json({ success: false, message: 'Invalid credentials' });
-  }
+  });
 });
+
 
 // PROTECTED ROUTES below
 
