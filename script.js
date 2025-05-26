@@ -1,129 +1,194 @@
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let projects = JSON.parse(localStorage.getItem("projects")) || ["General"];
-let filterCategory = "";
+const projectList = document.getElementById('projects');
 
-const COLORS = ["red", "green", "blue", "yellow", "purple", "pink"];
-const categoryColors = {};
+// LOGIN FUNCTION
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
 
-function save() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("projects", JSON.stringify(projects));
-}
-
-function assignColor(category) {
-  if (!categoryColors[category]) {
-    const color = COLORS[Object.keys(categoryColors).length % COLORS.length];
-    categoryColors[category] = color;
-  }
-  return categoryColors[category];
-}
-
-function addTask() {
-  const taskText = document.getElementById("taskInput").value.trim();
-  const selectedCat = document.getElementById("categorySelect").value;
-  const newCat = document.getElementById("customCategory").value.trim();
-  const dueDate = document.getElementById("dueDateInput").value;
-  const selectedProject = document.getElementById("projectSelect").value;
-  const newProject = document.getElementById("newProject").value.trim();
-
-  const category = newCat || selectedCat || "General";
-  const project = newProject || selectedProject || "General";
-
-  if (!taskText) return;
-
-  if (newProject && !projects.includes(newProject)) {
-    projects.push(newProject);
+  if (!email || !password) {
+    alert("Please enter both email and password.");
+    return;
   }
 
-  tasks.push({ text: taskText, category, dueDate, done: false, project });
-  assignColor(category);
-  save();
+  try {
+    const res = await fetch('http://localhost:3000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
 
-  document.getElementById("taskInput").value = "";
-  document.getElementById("customCategory").value = "";
-  document.getElementById("dueDateInput").value = "";
-  document.getElementById("newProject").value = "";
+    const data = await res.json();
 
-  renderTasks();
+    if (res.ok && data.token) {
+      localStorage.setItem('token', data.token);
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('signup').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+      loadProjects();
+    } else {
+      alert(data.message || 'Invalid login credentials.');
+    }
+  } catch (err) {
+    alert('Error during login. Please try again.');
+    console.error(err);
+  }
 }
 
-function toggleTask(index) {
-  tasks[index].done = !tasks[index].done;
-  save();
-  renderTasks();
+// SIGNUP FUNCTION
+async function signup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value.trim();
+
+  if (!name || !email || !password) {
+    alert("Please fill in all signup fields.");
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost:3000/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('Signup successful! Please log in.');
+      // Clear signup fields
+      document.getElementById('signup-name').value = '';
+      document.getElementById('signup-email').value = '';
+      document.getElementById('signup-password').value = '';
+      // Show login form, hide signup form
+      document.getElementById('signup').style.display = 'none';
+      document.getElementById('login').style.display = 'block';
+    } else {
+      alert(data.message || 'Signup failed.');
+    }
+  } catch (err) {
+    alert('Error during signup.');
+    console.error(err);
+  }
 }
 
-function deleteTask(index) {
-  tasks.splice(index, 1);
-  save();
-  renderTasks();
+// LOAD PROJECTS FUNCTION
+async function loadProjects() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('User not authenticated.');
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost:3000/api/projects', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (res.ok && Array.isArray(data)) {
+      displayProjects(data);
+    } else {
+      projectList.innerHTML = '<p>No projects found.</p>';
+    }
+  } catch (err) {
+    console.error('Failed to load projects:', err);
+    alert('Error loading projects.');
+  }
 }
 
-function renderTasks() {
-  const taskList = document.getElementById("taskList");
-  taskList.innerHTML = "";
-
-  const visibleTasks = filterCategory
-    ? tasks.filter(t => t.category === filterCategory)
-    : tasks;
-
-  visibleTasks.forEach((task, index) => {
-    assignColor(task.category);
-    const badgeClass = categoryColors[task.category] || "default";
-
-    const li = document.createElement("li");
-    li.className = `task ${task.done ? "done" : ""}`;
-
-    li.innerHTML = `
-      <div class="task-left" onclick="toggleTask(${index})">
-        <div class="circle ${task.done ? "checked" : ""}"></div>
-        <div>
-          <div class="task-text">${task.text}</div>
-          <div class="badge ${badgeClass}">${task.category}</div>
-          <small>Project: ${task.project}</small>
-          ${task.dueDate ? `<small>Due: ${task.dueDate}</small>` : ""}
-        </div>
-      </div>
-      <button onclick="deleteTask(${index})">🗑️</button>
-    `;
-
-    taskList.appendChild(li);
+// DISPLAY PROJECTS FUNCTION (your version)
+function displayProjects(projects) {
+  projectList.innerHTML = '';
+  projects.forEach(p => {
+    const projectDiv = document.createElement('div');
+    projectDiv.textContent = `${p.project_name} - ${p.description}`;
+    
+    const viewTasksBtn = document.createElement('button');
+    viewTasksBtn.textContent = 'View Tasks';
+    viewTasksBtn.onclick = () => loadTasks(p.project_id);
+    
+    projectDiv.appendChild(viewTasksBtn);
+    projectList.appendChild(projectDiv);
   });
-
-  renderFilters();
-  renderCategorySelect();
-  renderProjectSelect();
 }
 
-function renderFilters() {
-  const filterEl = document.getElementById("categoryFilter");
-  const categories = [...new Set(tasks.map(task => task.category))];
-  filterEl.innerHTML = `<button onclick="setFilter('')">All</button>`;
-  categories.forEach(cat => {
-    filterEl.innerHTML += `<button onclick="setFilter('${cat}')">${cat}</button>`;
+// LOAD TASKS FUNCTION (your version)
+function loadTasks(projectId) {
+  fetch(`http://localhost:3000/api/projects/${projectId}/tasks`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(`Tasks:\n${data.map(t => `${t.task_name} (${t.status})`).join('\n')}`);
+  })
+  .catch(err => {
+    console.error('Failed to load tasks:', err);
+    alert('Error loading tasks.');
   });
 }
 
-function renderCategorySelect() {
-  const select = document.getElementById("categorySelect");
-  const categories = [...new Set(tasks.map(task => task.category))];
-  select.innerHTML = `<option value="">-- Choose Category --</option>`;
-  categories.forEach(cat => {
-    select.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
+// CREATE PROJECT FUNCTION
+async function createProject() {
+  const pname = document.getElementById('pname').value.trim();
+  const pdesc = document.getElementById('pdesc').value.trim();
+  const pstart = document.getElementById('pstart').value.trim();
+  const pend = document.getElementById('pend').value.trim();
+
+  if (!pname || !pdesc || !pstart || !pend) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('User not authenticated.');
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost:3000/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        project_name: pname,
+        description: pdesc,
+        start_date: pstart,
+        end_date: pend
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('Project created!');
+      loadProjects();
+      // Clear form
+      document.getElementById('pname').value = '';
+      document.getElementById('pdesc').value = '';
+      document.getElementById('pstart').value = '';
+      document.getElementById('pend').value = '';
+    } else {
+      alert(data.message || 'Failed to create project.');
+    }
+  } catch (err) {
+    console.error('Project creation error:', err);
+    alert('Error creating project.');
+  }
 }
 
-function renderProjectSelect() {
-  const select = document.getElementById("projectSelect");
-  select.innerHTML = `<option value="">-- Choose Project --</option>`;
-  projects.forEach(project => {
-    select.innerHTML += `<option value="${project}">${project}</option>`;
-  });
+// LOGOUT FUNCTION (your version)
+function logout() {
+  localStorage.removeItem('token');
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('login').style.display = 'block';
+  document.getElementById('signup').style.display = 'none';
 }
-
-function setFilter(category) {
-  filterCategory = category;
-  renderTasks();
-}
-
-renderTasks();
